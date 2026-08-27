@@ -1,0 +1,64 @@
+# managed-by: git-governance-workspace | capability: merge-conflict-notify | version: 1
+name: Governance Merge Conflict Notify
+'on':
+  pull_request:
+    types:
+    - opened
+    - synchronize
+    - closed
+jobs:
+  check-merge-conflicts:
+    if: github.event.action != 'closed'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    - name: check merge conflicts
+      run: python3 .governance-ci/check_merge_conflicts.py
+      env:
+        GOVERNANCE_PROVIDER: github
+        GOVERNANCE_REPO: ${{ github.repository }}
+        GOVERNANCE_PR_NUMBER: ${{ github.event.pull_request.number }}
+        GOVERNANCE_SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        GOVERNANCE_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        GOVERNANCE_ACTOR: ${{ github.event.pull_request.user.login }}
+        GOVERNANCE_SHA: ${{ github.event.pull_request.head.sha }}
+        GOVERNANCE_PR_URL: ${{ github.event.pull_request.html_url }}
+        GOVERNANCE_ACTION: open_or_sync
+        GOVERNANCE_DEFAULT_BRANCH: main
+        GOVERNANCE_AUTO_MERGE: 'false'
+        CONFLICT_EMAIL_ENABLED: 'true'
+        REVIEWER_EMAILS: ${{ secrets.REVIEWER_EMAILS }}
+        SMTP_HOST: ${{ secrets.SMTP_HOST }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        SMTP_FROM_ADDRESS: ${{ secrets.SMTP_FROM_ADDRESS }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  notify-merge-success:
+    if: github.event.action == 'closed'
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - name: notify merge success
+      run: python3 .governance-ci/check_merge_conflicts.py
+      env:
+        GOVERNANCE_PROVIDER: github
+        GOVERNANCE_REPO: ${{ github.repository }}
+        GOVERNANCE_PR_NUMBER: ${{ github.event.pull_request.number }}
+        GOVERNANCE_SOURCE_BRANCH: ${{ github.event.pull_request.head.ref }}
+        GOVERNANCE_TARGET_BRANCH: ${{ github.event.pull_request.base.ref }}
+        GOVERNANCE_SHA: ${{ github.event.pull_request.merge_commit_sha }}
+        GOVERNANCE_PR_URL: ${{ github.event.pull_request.html_url }}
+        GOVERNANCE_ACTION: closed
+        GOVERNANCE_MERGED: ${{ github.event.pull_request.merged }}
+        GOVERNANCE_DEFAULT_BRANCH: main
+        GOVERNANCE_AUTO_MERGE: 'false'
+        REVIEWER_EMAILS: ${{ secrets.REVIEWER_EMAILS }}
+        SMTP_HOST: ${{ secrets.SMTP_HOST }}
+        SMTP_PORT: ${{ secrets.SMTP_PORT }}
+        SMTP_USER: ${{ secrets.SMTP_USER }}
+        SMTP_PASSWORD: ${{ secrets.SMTP_PASSWORD }}
+        SMTP_FROM_ADDRESS: ${{ secrets.SMTP_FROM_ADDRESS }}
+        GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
