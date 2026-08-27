@@ -1,1 +1,1 @@
-# test-merge-conflict-notifydirect push test
+# test-merge-conflict-notify
